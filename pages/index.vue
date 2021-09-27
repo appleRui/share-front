@@ -10,8 +10,8 @@
       <label><input type="submit" value="送信" @click="storePost"></label>
     </div>
     <div class="post-conte">
-      <ul class="post-items" v-for="post in posts" :key="post.id">
-        <li><span>{{ post.post }}</span><button @click="deletePost(post.id)">削除</button><button>コメントする</button><button>いいねする</button></li>
+      <ul class="post-items">
+        <li v-for="post in posts" :key="post.id"><span>{{ post.post }}</span><button @click="deletePost(post.id)">削除</button><button><NuxtLink :to="`/post/${post.id}`">コメントする</NuxtLink></button><button>いいねする</button></li>
       </ul>
     </div>
   </div>
@@ -40,9 +40,7 @@ export default {
     async storePost() {
       const sendData = {
         post: this.post,
-        user_id: this.user_id
       };
-      console.log(sendData);
       if(this.post !== ''){
         await this.$axios.post("http://localhost:8000/api/v1/post/", sendData);
         this.getPost();
