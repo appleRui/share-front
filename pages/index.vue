@@ -34,6 +34,7 @@ export default {
     async getPost() {
       const resData = await this.$axios.get("http://127.0.0.1:8000/api/v1/post/");
       this.posts = await resData.data.data;
+      console.log(this.posts);
       await this.hasLike(this.posts);
     },
     async storePost() {

@@ -30,7 +30,7 @@ export default {
   },
   methods: {
     async getComments() {
-      const resData = await this.$axios.get("http://127.0.0.1:8000/api/v1/post/" + this.$route.params.id + "/comments");
+      const resData = await this.$axios.get("http://127.0.0.1:8000/api/v1/post/" + this.$route.params.id + "/comments", {params: {post_id: this.$route.params.id}});
       this.comments = resData.data.data;
     },
     async getPost() {
