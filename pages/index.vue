@@ -26,7 +26,6 @@ export default {
     return{
       userName: null,
       user_id: null,
-      email: null,
       post: null,
       posts: []
     }
@@ -36,7 +35,6 @@ export default {
       const resData = await this.$axios.get("http://127.0.0.1:8000/api/v1/post/");
       this.posts = await resData.data.data;
       await this.hasLike(this.posts);
-      // this.hasLike(resData.data.data);
     },
     async storePost() {
       const sendData = {
@@ -56,7 +54,7 @@ export default {
     async hasLike(posts){
     for (let i = 0; i < posts.length; i++) {
         const res = await this.$axios.get("http://localhost:8000/api/v1/like", {params: {post_id:  posts[i].id, user_id: this.user_id}});
-        console.log(res.data.result);
+        posts[i].niced = res.data.result;
       }
       this.posts = posts;
     },
@@ -75,7 +73,6 @@ export default {
         let res = await this.$axios.delete("http://localhost:8000/api/v1/like/", {data: params});
         this.posts[index].niced = res.data.data.result;
         this.posts[index].like_coute = res.data.data.like_count;
-        // console.log(this.posts[index].niced);
       }
     },
     logout() {
@@ -86,15 +83,17 @@ export default {
     }
   },
   created() {
+    
     firebase.auth().onAuthStateChanged(async (user) => {
       if (user) {
         this.user_id = user.uid
         this.userName = user.displayName
+        this.getPost(); // ここで読み込ませればuser_idを取得後にできる
       }else{
         this.$router.replace('/login')
       }
     })
-    this.getPost();
+    // this.getPost();  ← ここに書くとfirebaseで取得してくる前に処理するのでuser_idが取得できない
   },
 }
 </script>
