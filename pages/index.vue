@@ -11,7 +11,7 @@
     </div>
     <div class="post-conte">
       <ul class="post-items">
-        <li v-for="post in posts" :key="post.id"><span>{{ post.post }}</span><button @click="deletePost(post.id)">削除</button><button><NuxtLink :to="`/post/${post.id}`">コメントする</NuxtLink></button><button>いいねする</button></li>
+        <li v-for="(post, index) in posts" :key="post.id"><span>{{ post.post }}</span><button @click="deletePost(post.id)">削除</button><button><NuxtLink :to="`/post/${post.id}`">コメントする</NuxtLink></button><button @click="like(post.id, index)">いいねする({{ post.like_coute }})</button></li>
       </ul>
     </div>
   </div>
@@ -26,7 +26,6 @@ export default {
     return{
       userName: null,
       user_id: null,
-      email: null,
       post: null,
       posts: []
     }
@@ -34,14 +33,15 @@ export default {
   methods: {
     async getPost() {
       const resData = await this.$axios.get("http://127.0.0.1:8000/api/v1/post/");
-      console.log(resData);
-      this.posts = resData.data.data;
+      this.posts = await resData.data.data;
+      await this.hasLike(this.posts);
     },
     async storePost() {
       const sendData = {
         post: this.post,
+        user_id: this.user_id
       };
-      if(this.post !== ''){
+      if(this.post != ''){
         await this.$axios.post("http://localhost:8000/api/v1/post/", sendData);
         this.getPost();
         this.post = ''
@@ -49,8 +49,31 @@ export default {
     },
     async deletePost(id) {
       await this.$axios.delete("http://localhost:8000/api/v1/post/" + id);
-      console.log('test');
       this.getPost();
+    },
+    async hasLike(posts){
+    for (let i = 0; i < posts.length; i++) {
+        const res = await this.$axios.get("http://localhost:8000/api/v1/like", {params: {post_id:  posts[i].id, user_id: this.user_id}});
+        posts[i].niced = res.data.result;
+      }
+      this.posts = posts;
+    },
+    async like(post_id, index) {
+      const params = {
+        post_id: post_id,
+        user_id: this.user_id
+      }
+      if(!this.posts[index].niced){
+        // like
+        let res = await this.$axios.post("http://localhost:8000/api/v1/like", params);
+        this.posts[index].niced = res.data.data.result;
+        this.posts[index].like_coute = res.data.data.like_count;
+      }else{
+        // unlike
+        let res = await this.$axios.delete("http://localhost:8000/api/v1/like/", {data: params});
+        this.posts[index].niced = res.data.data.result;
+        this.posts[index].like_coute = res.data.data.like_count;
+      }
     },
     logout() {
       firebase.auth().signOut().then(() => {
@@ -60,16 +83,17 @@ export default {
     }
   },
   created() {
-    firebase.auth().onAuthStateChanged((user) => {
+    
+    firebase.auth().onAuthStateChanged(async (user) => {
       if (user) {
-        this.userName = user.displayName
         this.user_id = user.uid
-        console.log(user.uid);
+        this.userName = user.displayName
+        this.getPost(); // ここで読み込ませればuser_idを取得後にできる
       }else{
         this.$router.replace('/login')
       }
     })
-    this.getPost();
+    // this.getPost();  ← ここに書くとfirebaseで取得してくる前に処理するのでuser_idが取得できない
   },
 }
 </script>
